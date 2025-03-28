@@ -6,26 +6,44 @@
         <div class="panel-header">
           <div class="panel-title">Folders</div>
           <div class="panel-actions">
-            <button @click="showNewFolderModal = true"><i class="fas fa-plus"></i></button>
+            <button><i class="fas fa-plus"></i></button>
             <button><i class="fas fa-ellipsis-v"></i></button>
           </div>
         </div>
         <ul class="sidebar-menu">
-          <li 
-            v-for="folder in folders" 
-            :key="folder.id" 
-            class="sidebar-item" 
-            :class="{ 'active': selectedFolderId === folder.id }"
-            @click="selectFolder(folder.id)"
-          >
-            <i :class="folder.icon"></i>
-            <span>{{ folder.name }}</span>
+          <li class="sidebar-item active">
+            <i class="fas fa-folder-open"></i>
+            <span>All Content</span>
+          </li>
+          <li class="sidebar-item">
+            <i class="fas fa-folder"></i>
+            <span>Images</span>
+          </li>
+          <li class="sidebar-item">
+            <i class="fas fa-folder"></i>
+            <span>Logos</span>
+          </li>
+          <li class="sidebar-item">
+            <i class="fas fa-folder"></i>
+            <span>Backgrounds</span>
+          </li>
+          <li class="sidebar-item">
+            <i class="fas fa-folder"></i>
+            <span>Videos</span>
+          </li>
+          <li class="sidebar-item">
+            <i class="fas fa-folder"></i>
+            <span>Presentations</span>
+          </li>
+          <li class="sidebar-item">
+            <i class="fas fa-folder"></i>
+            <span>HTML Content</span>
           </li>
         </ul>
       </div>
       <div class="content-panel">
         <div class="panel-header">
-          <div class="panel-title">{{ currentFolderName }}</div>
+          <div class="panel-title">All Content</div>
           <div class="panel-actions">
             <button @click="showUploadModal = true"><i class="fas fa-upload"></i></button>
             <button><i class="fas fa-sort"></i></button>
@@ -90,22 +108,16 @@
       <div class="form-group">
         <label class="form-label">Destination Folder</label>
         <select class="form-control">
-          <option v-for="folder in folders" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
+          <option value="all">All Content</option>
+          <option value="images">Images</option>
+          <option value="videos">Videos</option>
+          <option value="presentations">Presentations</option>
+          <option value="html">HTML Content</option>
         </select>
       </div>
       <template #footer>
         <button class="btn btn-secondary" @click="showUploadModal = false">Cancel</button>
         <button class="btn btn-primary" @click="uploadContent">Upload</button>
-      </template>
-    </Modal>
-    <Modal v-model="showNewFolderModal" title="Create New Folder">
-      <div class="form-group">
-        <label class="form-label">Folder Name</label>
-        <input type="text" class="form-control" v-model="newFolderName" />
-      </div>
-      <template #footer>
-        <button class="btn btn-secondary" @click="showNewFolderModal = false">Cancel</button>
-        <button class="btn btn-primary" @click="createNewFolder">Create</button>
       </template>
     </Modal>
   </div>
@@ -118,24 +130,12 @@ import SearchBar from '../components/SearchBar.vue'
 import ListView from '../components/ListView.vue'
 import Modal from '../components/Modal.vue'
 
-// Folder structure
-const folders = ref([
-  { id: 1, name: 'All Content', icon: 'fas fa-folder-open' },
-  { id: 2, name: 'Images', icon: 'fas fa-folder' },
-  { id: 3, name: 'Logos', icon: 'fas fa-folder' },
-  { id: 4, name: 'Backgrounds', icon: 'fas fa-folder' },
-  { id: 5, name: 'Videos', icon: 'fas fa-folder' },
-  { id: 6, name: 'Presentations', icon: 'fas fa-folder' },
-  { id: 7, name: 'HTML Content', icon: 'fas fa-folder' }
-])
-
 const contentItems = ref([
   { 
     id: 1, 
     title: 'Company Logo.png', 
     subtitle: '1.2 MB', 
     icon: 'fas fa-image',
-    folderId: 1,
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -147,7 +147,6 @@ const contentItems = ref([
     title: 'Product Demo.mp4', 
     subtitle: '24.5 MB', 
     icon: 'fas fa-video',
-    folderId: 1,
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -159,7 +158,6 @@ const contentItems = ref([
     title: 'Quarterly Report.pptx', 
     subtitle: '5.8 MB', 
     icon: 'fas fa-file-powerpoint',
-    folderId: 1,
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -171,7 +169,6 @@ const contentItems = ref([
     title: 'Welcome Banner.jpg', 
     subtitle: '3.4 MB', 
     icon: 'fas fa-image',
-    folderId: 1,
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -183,7 +180,6 @@ const contentItems = ref([
     title: 'CEO Message.mp4', 
     subtitle: '45.2 MB', 
     icon: 'fas fa-video',
-    folderId: 1,
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -195,7 +191,6 @@ const contentItems = ref([
     title: 'Interactive Menu.html', 
     subtitle: '0.8 MB', 
     icon: 'fas fa-code',
-    folderId: 1,
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -206,33 +201,14 @@ const contentItems = ref([
 
 const searchQuery = ref('')
 const selectedContentId = ref<number | null>(null)
-const selectedFolderId = ref(1) // Default to "All Content"
 const showUploadModal = ref(false)
-const showNewFolderModal = ref(false)
-const newFolderName = ref('')
-
-const currentFolderName = computed(() => {
-  const folder = folders.value.find(f => f.id === selectedFolderId.value)
-  return folder ? folder.name : 'All Content'
-})
 
 const filteredContent = computed(() => {
-  let result = contentItems.value
-  
-  // Filter by folder if not "All Content"
-  if (selectedFolderId.value !== 1) {
-    result = result.filter(item => item.folderId === selectedFolderId.value)
-  }
-  
-  // Filter by search query
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(item => 
-      item.title.toLowerCase().includes(query)
-    )
-  }
-  
-  return result
+  if (!searchQuery.value) return contentItems.value
+  const query = searchQuery.value.toLowerCase()
+  return contentItems.value.filter(item => 
+    item.title.toLowerCase().includes(query)
+  )
 })
 
 const selectedContent = computed(() => {
@@ -246,11 +222,6 @@ function searchContent(query: string) {
 
 function selectContent(id: number) {
   selectedContentId.value = id
-}
-
-function selectFolder(id: number) {
-  selectedFolderId.value = id
-  selectedContentId.value = null // Clear selected content when changing folders
 }
 
 function handleContentAction({ id, action }: { id: number, action: string }) {
@@ -279,21 +250,6 @@ function getContentType(icon: string) {
 function uploadContent() {
   alert('Content upload functionality would be implemented here')
   showUploadModal.value = false
-}
-
-function createNewFolder() {
-  if (newFolderName.value.trim()) {
-    const newId = Math.max(...folders.value.map(f => f.id)) + 1
-    folders.value.push({
-      id: newId,
-      name: newFolderName.value.trim(),
-      icon: 'fas fa-folder'
-    })
-    newFolderName.value = ''
-    showNewFolderModal.value = false
-    // Select the newly created folder
-    selectedFolderId.value = newId
-  }
 }
 </script>
 

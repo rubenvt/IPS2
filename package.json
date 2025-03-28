@@ -1,9 +1,7 @@
 {
-  "name": "vite-vue-typescript-<boltAction type="file" filePath="package.json">
-{
-  "name": "vite-vue-typescript-starter",
+  "name": "digital-signage-management",
   "private": true,
-  "version": "0.0.0",
+  "version": "27.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,16 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "chart.js": "^3.9.1",
-    "vue": "^3.3.4",
-    "vue-chartjs": "^4.1.2",
-    "vue-router": "^4.2.4",
-    "vuedraggable": "^4.1.0"
+    "@fortawesome/fontawesome-free": "^6.4.0",
+    "chart.js": "^4.3.0",
+    "pinia": "^2.1.3",
+    "vue": "^3.2.47",
+    "vue-draggable-next": "^2.1.1",
+    "vue-router": "^4.2.2"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^4.2.3",
+    "@vitejs/plugin-vue": "^4.1.0",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5",
-    "vue-tsc": "^1.8.5"
+    "vite": "^4.3.9",
+    "vue-tsc": "^1.4.2"
   }
 }

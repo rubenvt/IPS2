@@ -124,8 +124,7 @@ import Header from '../components/Header.vue'
 import SearchBar from '../components/SearchBar.vue'
 import ListView from '../components/ListView.vue'
 import Modal from '../components/Modal.vue'
-// Import draggable correctly
-import draggable from 'vuedraggable'
+import { VueDraggableNext as draggable } from 'vue-draggable-next'
 
 const playlists = ref([
   { 
@@ -269,7 +268,7 @@ function handlePlaylistAction({ id, action }: { id: number, action: string }) {
 
 function addPlaylist() {
   if (newPlaylistName.value) {
-    const newId = Math.max(...playlists.value.map(p => p.id), 0) + 1
+    const newId = Math.max(...playlists.value.map(p => p.id)) + 1
     playlists.value.push({
       id: newId,
       title: newPlaylistName.value,
@@ -284,8 +283,6 @@ function addPlaylist() {
     newPlaylistName.value = ''
     newPlaylistDescription.value = ''
     showAddPlaylist.value = false
-    // Select the newly created playlist
-    selectedPlaylistId.value = newId
   }
 }
 
@@ -304,9 +301,7 @@ function addContentToPlaylist() {
       return null
     }).filter(item => item !== null) as any[]
     
-    if (selectedPlaylist.value) {
-      selectedPlaylist.value.items = [...selectedPlaylist.value.items, ...newItems]
-    }
+    selectedPlaylist.value.items = [...selectedPlaylist.value.items, ...newItems]
     selectedContentIds.value = []
     showAddContentModal.value = false
   }
