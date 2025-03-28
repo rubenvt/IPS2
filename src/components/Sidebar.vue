@@ -3,7 +3,7 @@
     <div class="sidebar-header">
       <img src="../assets/logo.svg" alt="Logo" class="logo" />
       <div class="product-info">
-        <div class="product-name">ProCon</div>
+        <div class="product-name">IPSv2</div>
         <div class="product-version">v.27.3.0</div>
       </div>
     </div>
