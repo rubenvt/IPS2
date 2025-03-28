@@ -1,110 +1,53 @@
 <template>
-  <div class="main-content">
-    <Header title="Overview" />
-    <div class="content-area">
-      <div class="dashboard-grid">
-        <!-- Status Cards -->
-        <div class="panel status-panel">
-          <div class="panel-header">
-            <div class="panel-title">System Status</div>
+  <div class="overview-page">
+    <h1>Dashboard Overview</h1>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Players</h3>
+        <div class="stat-value">{{ store.state.players.length }}</div>
+        <div class="stat-detail">{{ activePlayerCount }} active</div>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Playlists</h3>
+        <div class="stat-value">{{ store.state.playlists.length }}</div>
+        <div class="stat-detail">{{ activePlaylists }} active</div>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Content Items</h3>
+        <div class="stat-value">{{ store.state.content.length }}</div>
+        <div class="stat-detail">{{ storageUsed }} MB used</div>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Storage</h3>
+        <div class="stat-value">{{ storagePercentage }}%</div>
+        <div class="stat-detail">{{ storageUsed }} / {{ storageLimit }} MB</div>
+      </div>
+    </div>
+    
+    <div class="charts-grid">
+      <div class="chart-card">
+        <PlayerStatusChart />
+      </div>
+      
+      <div class="chart-card">
+        <ContentUsageChart />
+      </div>
+    </div>
+    
+    <div class="recent-activity">
+      <h2>Recent Activity</h2>
+      <div class="activity-list">
+        <div class="activity-item" v-for="(activity, index) in recentActivities" :key="index">
+          <div class="activity-icon">
+            <i :class="activity.icon"></i>
           </div>
-          <div class="dashboard-content">
-            <div class="dashboard-card">
-              <div class="card-title">Players</div>
-              <div class="card-value">7</div>
-              <div class="card-subtitle">5 online, 2 offline</div>
-            </div>
-            <div class="dashboard-card">
-              <div class="card-title">Playlists</div>
-              <div class="card-value">12</div>
-              <div class="card-subtitle">3 active</div>
-            </div>
-            <div class="dashboard-card">
-              <div class="card-title">Content Items</div>
-              <div class="card-value">45</div>
-              <div class="card-subtitle">12 GB total</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Warnings Panel -->
-        <div class="panel warnings-panel">
-          <div class="panel-header">
-            <div class="panel-title">Alerts</div>
-          </div>
-          <div class="warnings-content">
-            <WarningCard 
-              type="error" 
-              title="Player Offline" 
-              message="Player 'Lobby Display' has been offline for 2 days." 
-            />
-            <WarningCard 
-              type="error" 
-              title="Player Offline" 
-              message="Player 'Cafeteria Screen' has been offline for 5 hours." 
-            />
-            <WarningCard 
-              type="warning" 
-              title="License Expiring" 
-              message="Your Pro license will expire in 15 days." 
-            />
-          </div>
-        </div>
-
-        <!-- Player Status Chart -->
-        <div class="panel chart-panel">
-          <div class="panel-header">
-            <div class="panel-title">Player Status</div>
-          </div>
-          <div class="chart-content">
-            <PlayerStatusChart :online="5" :offline="2" />
-          </div>
-        </div>
-
-        <!-- Content Usage Chart -->
-        <div class="panel chart-panel">
-          <div class="panel-header">
-            <div class="panel-title">Content Distribution</div>
-          </div>
-          <div class="chart-content">
-            <ContentUsageChart />
-          </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="panel activity-panel">
-          <div class="panel-header">
-            <div class="panel-title">Recent Activity</div>
-          </div>
-          <div class="activity-content">
-            <div class="activity-item">
-              <div class="activity-icon"><i class="fas fa-upload"></i></div>
-              <div class="activity-details">
-                <div class="activity-text">New content uploaded: <strong>Summer Promotion.mp4</strong></div>
-                <div class="activity-time">Today, 10:23 AM</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon"><i class="fas fa-desktop"></i></div>
-              <div class="activity-details">
-                <div class="activity-text">Player <strong>Reception Screen</strong> came online</div>
-                <div class="activity-time">Today, 9:15 AM</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon"><i class="fas fa-list"></i></div>
-              <div class="activity-details">
-                <div class="activity-text">Playlist <strong>Holiday Special</strong> updated</div>
-                <div class="activity-time">Yesterday, 4:30 PM</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon"><i class="fas fa-desktop"></i></div>
-              <div class="activity-details">
-                <div class="activity-text">Player <strong>Cafeteria Screen</strong> went offline</div>
-                <div class="activity-time">Yesterday, 2:45 PM</div>
-              </div>
-            </div>
+          <div class="activity-details">
+            <div class="activity-title">{{ activity.title }}</div>
+            <div class="activity-time">{{ activity.time }}</div>
           </div>
         </div>
       </div>
@@ -113,105 +56,118 @@
 </template>
 
 <script setup lang="ts">
-import Header from '../components/Header.vue';
-import WarningCard from '../components/WarningCard.vue';
+import { computed, ref } from 'vue';
 import PlayerStatusChart from '../components/charts/PlayerStatusChart.vue';
 import ContentUsageChart from '../components/charts/ContentUsageChart.vue';
+import { store } from '../store';
+
+// Computed properties
+const activePlayerCount = computed(() => {
+  return store.state.players.filter(p => p.status === 'active').length || 0;
+});
+
+const activePlaylists = computed(() => {
+  return store.state.playlists.filter(p => p.active).length || 0;
+});
+
+const storageUsed = computed(() => {
+  return store.state.systemSettings.storageUsed || 0;
+});
+
+const storageLimit = computed(() => {
+  return store.state.systemSettings.storageLimit || 10000;
+});
+
+const storagePercentage = computed(() => {
+  return Math.round((storageUsed.value / storageLimit.value) * 100);
+});
+
+// Sample recent activities
+const recentActivities = ref([
+  {
+    title: 'New content uploaded: Summer Promotion',
+    time: '10 minutes ago',
+    icon: 'fas fa-upload'
+  },
+  {
+    title: 'Player #103 went offline',
+    time: '25 minutes ago',
+    icon: 'fas fa-exclamation-triangle'
+  },
+  {
+    title: 'Playlist "Holiday Special" updated',
+    time: '1 hour ago',
+    icon: 'fas fa-list'
+  },
+  {
+    title: 'New player registered: Lobby Display',
+    time: '3 hours ago',
+    icon: 'fas fa-tv'
+  }
+]);
 </script>
 
 <style scoped>
-.dashboard-grid {
+.overview-page {
+  padding: 20px;
+}
+
+.stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: minmax(min-content, max-content);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
-  padding: 20px;
+  margin-bottom: 30px;
 }
 
-.panel {
+.stat-card {
   background-color: #fff;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.status-panel {
-  grid-column: span 3;
-}
-
-.warnings-panel {
-  grid-column: span 3;
-}
-
-.chart-panel {
-  grid-column: span 1;
-}
-
-.activity-panel {
-  grid-column: span 3;
-}
-
-.panel-header {
-  padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
-  background-color: #f8fafc;
-}
-
-.panel-title {
-  font-weight: 600;
-  font-size: 16px;
-  color: #1e293b;
-}
-
-.dashboard-content {
+  border-radius: 8px;
   padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 10px 0;
+  color: #2c3e50;
+}
+
+.stat-detail {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
   gap: 20px;
+  margin-bottom: 30px;
 }
 
-.dashboard-card {
+.chart-card {
   background-color: #fff;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
   padding: 20px;
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.card-title {
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 10px;
+.recent-activity {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.card-value {
-  font-size: 28px;
-  font-weight: 600;
-  margin-bottom: 5px;
-  color: #1e293b;
-}
-
-.card-subtitle {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.warnings-content {
-  padding: 16px;
-}
-
-.chart-content {
-  padding: 16px;
-}
-
-.activity-content {
-  padding: 0;
+.activity-list {
+  margin-top: 15px;
 }
 
 .activity-item {
   display: flex;
-  padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
 }
 
 .activity-item:last-child {
@@ -219,30 +175,24 @@ import ContentUsageChart from '../components/charts/ContentUsageChart.vue';
 }
 
 .activity-icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background-color: #dbeafe;
-  color: #3b82f6;
+  background-color: #f0f5ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 16px;
-  flex-shrink: 0;
+  margin-right: 15px;
+  color: #3498db;
 }
 
-.activity-details {
-  flex: 1;
-}
-
-.activity-text {
-  font-size: 14px;
-  margin-bottom: 4px;
-  color: #1e293b;
+.activity-title {
+  font-weight: 500;
+  margin-bottom: 5px;
 }
 
 .activity-time {
-  font-size: 12px;
-  color: #64748b;
+  font-size: 0.8rem;
+  color: #7f8c8d;
 }
 </style>

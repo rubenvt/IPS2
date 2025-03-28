@@ -5,62 +5,95 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
-
-// Register required components for doughnut chart
-Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
+import { ref, onMounted, watch } from 'vue';
+import Chart from 'chart.js/auto';
+import { store } from '../../store';
 
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chart: Chart | null = null;
 
-const createChart = () => {
-  if (!chartCanvas.value) return;
-  
-  // Destroy existing chart if it exists
+// Watch for changes in content
+watch(() => store.state.content, () => {
+  updateChartData();
+}, { deep: true });
+
+function updateChartData() {
   if (chart) {
-    chart.destroy();
+    // Group content by type and calculate total size
+    const contentByType = store.state.content.reduce((acc: Record<string, number>, item: any) => {
+      const type = item.type || 'unknown';
+      acc[type] = (acc[type] || 0) + (item.size || 0);
+      return acc;
+    }, {});
+    
+    // Update chart data
+    chart.data.labels = Object.keys(contentByType);
+    chart.data.datasets[0].data = Object.values(contentByType);
+    chart.update();
   }
-  
-  chart = new Chart(chartCanvas.value, {
-    type: 'doughnut',
-    data: {
-      labels: ['Videos', 'Images', 'Documents', 'Other'],
-      datasets: [
-        {
-          data: [45, 30, 15, 10],
-          backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
-          borderColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
-          borderWidth: 1,
-          hoverOffset: 4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            boxWidth: 12,
-            padding: 15
-          }
-        }
-      },
-      cutout: '70%'
-    }
-  });
-};
+}
 
 onMounted(() => {
-  createChart();
+  if (chartCanvas.value) {
+    // Sample initial data
+    const initialData = {
+      labels: ['Images', 'Videos', 'Other'],
+      data: [250, 500, 50]
+    };
+    
+    chart = new Chart(chartCanvas.value, {
+      type: 'bar',
+      data: {
+        labels: initialData.labels,
+        datasets: [{
+          label: 'Storage Used (MB)',
+          data: initialData.data,
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(255, 206, 86, 0.6)'
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(255, 206, 86, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Size (MB)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Content Type'
+            }
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Content Usage by Type'
+          }
+        }
+      }
+    });
+  }
 });
 </script>
 
 <style scoped>
 .chart-container {
-  height: 180px;
   position: relative;
+  height: 300px;
+  width: 100%;
 }
 </style>

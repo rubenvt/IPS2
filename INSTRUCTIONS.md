@@ -35,12 +35,6 @@ This platform serves as a centralized management solution for organizations that
 - Preview playlists before deployment
 - Duplicate and template functionality
 
-### Layouts
-- Design multi-zone screen layouts
-- Assign different content to different screen zones
-- Create templates for consistent branding
-- Preview layouts with actual content
-
 ### Schedules
 - Create time-based content schedules
 - Set recurring schedules (daily, weekly, monthly)

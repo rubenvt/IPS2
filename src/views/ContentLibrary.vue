@@ -78,7 +78,7 @@
           <div class="section-content">
             <div class="form-group">
               <label class="form-label">Name</label>
-              <input type="text" class="form-control" v-model="selectedContent.title" />
+              <input type="text" class="form-control" :value="selectedContent.title" disabled />
             </div>
             <div class="form-group">
               <label class="form-label">Type</label>
@@ -89,21 +89,32 @@
               <input type="text" class="form-control" :value="selectedContent.subtitle" disabled />
             </div>
             <div class="form-group">
-              <label class="form-label">Tags</label>
-              <input type="text" class="form-control" placeholder="Add tags separated by commas" />
+              <label class="form-label">Upload Date</label>
+              <input type="text" class="form-control" :value="selectedContent.uploadDate || 'Not available'" disabled />
             </div>
           </div>
         </div>
         <div class="form-actions">
-          <button class="btn btn-secondary">Cancel</button>
-          <button class="btn btn-primary">Save Changes</button>
+          <button class="btn btn-secondary">Close</button>
         </div>
       </div>
     </div>
     <Modal v-model="showUploadModal" title="Upload Content">
       <div class="form-group">
         <label class="form-label">Select Files</label>
-        <input type="file" class="form-control" multiple />
+        <input 
+          type="file" 
+          class="form-control" 
+          ref="fileInput"
+          multiple 
+          @change="validateFiles"
+        />
+        <div class="file-types-info">
+          <small>Supported file types: JPG, PNG, GIF, MP4, WebM</small>
+        </div>
+        <div v-if="fileError" class="file-error-message">
+          {{ fileError }}
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Destination Folder</label>
@@ -111,13 +122,11 @@
           <option value="all">All Content</option>
           <option value="images">Images</option>
           <option value="videos">Videos</option>
-          <option value="presentations">Presentations</option>
-          <option value="html">HTML Content</option>
         </select>
       </div>
       <template #footer>
-        <button class="btn btn-secondary" @click="showUploadModal = false">Cancel</button>
-        <button class="btn btn-primary" @click="uploadContent">Upload</button>
+        <button class="btn btn-secondary" @click="cancelUpload">Cancel</button>
+        <button class="btn btn-primary" @click="uploadContent" :disabled="!isValidUpload">Upload</button>
       </template>
     </Modal>
   </div>
@@ -130,12 +139,18 @@ import SearchBar from '../components/SearchBar.vue'
 import ListView from '../components/ListView.vue'
 import Modal from '../components/Modal.vue'
 
+// Supported file types
+const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+const SUPPORTED_FILE_TYPES = [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
+
 const contentItems = ref([
   { 
     id: 1, 
     title: 'Company Logo.png', 
     subtitle: '1.2 MB', 
     icon: 'fas fa-image',
+    uploadDate: '2023-05-15',
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -147,6 +162,7 @@ const contentItems = ref([
     title: 'Product Demo.mp4', 
     subtitle: '24.5 MB', 
     icon: 'fas fa-video',
+    uploadDate: '2023-06-02',
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -158,6 +174,7 @@ const contentItems = ref([
     title: 'Quarterly Report.pptx', 
     subtitle: '5.8 MB', 
     icon: 'fas fa-file-powerpoint',
+    uploadDate: '2023-04-10',
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -169,6 +186,7 @@ const contentItems = ref([
     title: 'Welcome Banner.jpg', 
     subtitle: '3.4 MB', 
     icon: 'fas fa-image',
+    uploadDate: '2023-05-22',
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -180,6 +198,7 @@ const contentItems = ref([
     title: 'CEO Message.mp4', 
     subtitle: '45.2 MB', 
     icon: 'fas fa-video',
+    uploadDate: '2023-06-15',
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -191,6 +210,7 @@ const contentItems = ref([
     title: 'Interactive Menu.html', 
     subtitle: '0.8 MB', 
     icon: 'fas fa-code',
+    uploadDate: '2023-03-28',
     actions: [
       { name: 'preview', icon: 'fas fa-eye' },
       { name: 'download', icon: 'fas fa-download' },
@@ -202,6 +222,10 @@ const contentItems = ref([
 const searchQuery = ref('')
 const selectedContentId = ref<number | null>(null)
 const showUploadModal = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const selectedFiles = ref<File[]>([])
+const fileError = ref('')
+const isValidUpload = ref(false)
 
 const filteredContent = computed(() => {
   if (!searchQuery.value) return contentItems.value
@@ -247,9 +271,88 @@ function getContentType(icon: string) {
   return 'Unknown'
 }
 
+function validateFiles(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (!input.files || input.files.length === 0) {
+    fileError.value = '';
+    isValidUpload.value = false;
+    return;
+  }
+
+  const files = Array.from(input.files);
+  const invalidFiles = files.filter(file => !SUPPORTED_FILE_TYPES.includes(file.type));
+  
+  if (invalidFiles.length > 0) {
+    const invalidFileNames = invalidFiles.map(file => file.name).join(', ');
+    fileError.value = `Unsupported file type(s): ${invalidFileNames}. Only JPG, PNG, GIF, MP4, and WebM files are supported.`;
+    isValidUpload.value = false;
+  } else {
+    fileError.value = '';
+    selectedFiles.value = files;
+    isValidUpload.value = true;
+  }
+}
+
+function cancelUpload() {
+  showUploadModal.value = false;
+  fileError.value = '';
+  selectedFiles.value = [];
+  isValidUpload.value = false;
+  if (fileInput.value) {
+    fileInput.value.value = '';
+  }
+}
+
 function uploadContent() {
-  alert('Content upload functionality would be implemented here')
-  showUploadModal.value = false
+  if (!isValidUpload.value || selectedFiles.value.length === 0) {
+    return;
+  }
+
+  // Simulate file upload
+  const newItems = selectedFiles.value.map((file, index) => {
+    const id = Math.max(...contentItems.value.map(item => item.id)) + index + 1;
+    const fileIcon = getFileIcon(file.type);
+    
+    return {
+      id,
+      title: file.name,
+      subtitle: formatFileSize(file.size),
+      icon: fileIcon,
+      uploadDate: new Date().toISOString().split('T')[0],
+      actions: [
+        { name: 'preview', icon: 'fas fa-eye' },
+        { name: 'download', icon: 'fas fa-download' },
+        { name: 'delete', icon: 'fas fa-trash' }
+      ]
+    };
+  });
+
+  contentItems.value = [...contentItems.value, ...newItems];
+  
+  // Reset upload state
+  cancelUpload();
+  showUploadModal.value = false;
+  
+  alert(`Successfully uploaded ${newItems.length} file(s)`);
+}
+
+function getFileIcon(mimeType: string): string {
+  if (SUPPORTED_IMAGE_TYPES.includes(mimeType)) {
+    return 'fas fa-image';
+  } else if (SUPPORTED_VIDEO_TYPES.includes(mimeType)) {
+    return 'fas fa-video';
+  }
+  return 'fas fa-file';
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 </script>
 
@@ -305,5 +408,19 @@ function uploadContent() {
   margin-right: 12px;
   width: 20px;
   text-align: center;
+}
+
+.file-types-info {
+  margin-top: 4px;
+  color: #64748b;
+}
+
+.file-error-message {
+  margin-top: 8px;
+  color: #ef4444;
+  font-size: 14px;
+  padding: 8px;
+  background-color: #fee2e2;
+  border-radius: 4px;
 }
 </style>
