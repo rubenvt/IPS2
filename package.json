@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "npx --yes vite",
-    "build": "npx --yes vue-tsc && npx --yes vite build",
+    "build": "npx --yes vite build",
+    "build:check": "npx --yes vue-tsc && npx --yes vite build",
     "preview": "npx --yes vite preview"
   },
   "dependencies": {
@@ -21,5 +22,8 @@
     "typescript": "^5.0.2",
     "vite": "^4.4.5",
     "vue-tsc": "^1.8.5"
+  },
+  "engines": {
+    "node": ">=16.0.0 <22.0.0"
   }
 }
