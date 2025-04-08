@@ -15,21 +15,9 @@
             <i class="fas fa-users"></i>
             <span>Users</span>
           </li>
-          <li class="sidebar-item" :class="{ active: activeSection === 'network' }" @click="activeSection = 'network'">
-            <i class="fas fa-network-wired"></i>
-            <span>Network</span>
-          </li>
           <li class="sidebar-item" :class="{ active: activeSection === 'storage' }" @click="activeSection = 'storage'">
             <i class="fas fa-database"></i>
             <span>Storage</span>
-          </li>
-          <li class="sidebar-item" :class="{ active: activeSection === 'backup' }" @click="activeSection = 'backup'">
-            <i class="fas fa-save"></i>
-            <span>Backup</span>
-          </li>
-          <li class="sidebar-item" :class="{ active: activeSection === 'updates' }" @click="activeSection = 'updates'">
-            <i class="fas fa-sync"></i>
-            <span>Updates</span>
           </li>
         </ul>
       </div>
@@ -64,6 +52,69 @@
           </div>
           <div class="form-actions">
             <button class="btn btn-primary">Save Changes</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Users Management Section -->
+      <div class="content-panel" v-if="activeSection === 'users'">
+        <div class="panel-header">
+          <div class="panel-title">User Management</div>
+          <div class="panel-actions">
+            <button class="btn btn-primary" @click="openUserModal()">
+              <i class="fas fa-plus"></i> Add User
+            </button>
+          </div>
+        </div>
+        <div class="panel-content">
+          <div class="users-list">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="user in users" :key="user.id">
+                  <td>
+                    <div class="user-info">
+                      <div class="user-avatar" :style="{ backgroundColor: getUserColor(user.username) }">
+                        {{ getUserInitials(user.username) }}
+                      </div>
+                      <span>{{ user.username }}</span>
+                    </div>
+                  </td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    <span class="user-role" :class="getRoleClass(user.role)">
+                      {{ user.role }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="user-status" :class="{ 'status-active': user.active, 'status-inactive': !user.active }">
+                      {{ user.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="user-actions">
+                      <button class="action-btn" @click="openUserModal(user)">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="action-btn" @click="toggleUserStatus(user)">
+                        <i :class="user.active ? 'fas fa-ban' : 'fas fa-check'"></i>
+                      </button>
+                      <button class="action-btn" @click="confirmDeleteUser(user)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -195,7 +246,7 @@
       </div>
       
       <!-- Other sections would go here -->
-      <div class="content-panel" v-if="activeSection !== 'general' && activeSection !== 'storage'">
+      <div class="content-panel" v-if="activeSection !== 'general' && activeSection !== 'storage' && activeSection !== 'users'">
         <div class="panel-header">
           <div class="panel-title">{{ activeSection.charAt(0).toUpperCase() + activeSection.slice(1) }}</div>
         </div>
@@ -205,14 +256,175 @@
       </div>
     </div>
   </div>
+  
+  <!-- User Edit Modal -->
+  <Modal v-model="showUserModal" :title="editingUser ? 'Edit User' : 'Add New User'">
+    <div class="user-form">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" v-model="userForm.username" />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" v-model="userForm.email" />
+      </div>
+      
+      <div class="form-group" v-if="!editingUser">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" v-model="userForm.password" />
+      </div>
+      
+      <div class="form-group" v-if="editingUser">
+        <label class="form-label">Change Password</label>
+        <input type="password" class="form-control" v-model="userForm.password" placeholder="Leave blank to keep current password" />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-control" v-model="userForm.role">
+          <option value="Administrator">Administrator</option>
+          <option value="Content Manager">Content Manager</option>
+          <option value="Scheduler">Scheduler</option>
+          <option value="Viewer">Viewer</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <div class="toggle-switch">
+          <input type="checkbox" id="user-status" v-model="userForm.active" />
+          <label for="user-status"></label>
+          <span>{{ userForm.active ? 'Active' : 'Inactive' }}</span>
+        </div>
+      </div>
+      
+      <div class="section-header">Permissions</div>
+      
+      <div class="permissions-grid">
+        <div class="permission-group">
+          <div class="permission-header">Content</div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-content-view" v-model="userForm.permissions.content.view" />
+            <label for="perm-content-view">View Content</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-content-create" v-model="userForm.permissions.content.create" />
+            <label for="perm-content-create">Create Content</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-content-edit" v-model="userForm.permissions.content.edit" />
+            <label for="perm-content-edit">Edit Content</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-content-delete" v-model="userForm.permissions.content.delete" />
+            <label for="perm-content-delete">Delete Content</label>
+          </div>
+        </div>
+        
+        <div class="permission-group">
+          <div class="permission-header">Playlists</div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-playlists-view" v-model="userForm.permissions.playlists.view" />
+            <label for="perm-playlists-view">View Playlists</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-playlists-create" v-model="userForm.permissions.playlists.create" />
+            <label for="perm-playlists-create">Create Playlists</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-playlists-edit" v-model="userForm.permissions.playlists.edit" />
+            <label for="perm-playlists-edit">Edit Playlists</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-playlists-delete" v-model="userForm.permissions.playlists.delete" />
+            <label for="perm-playlists-delete">Delete Playlists</label>
+          </div>
+        </div>
+        
+        <div class="permission-group">
+          <div class="permission-header">Players</div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-players-view" v-model="userForm.permissions.players.view" />
+            <label for="perm-players-view">View Players</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-players-create" v-model="userForm.permissions.players.create" />
+            <label for="perm-players-create">Add Players</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-players-edit" v-model="userForm.permissions.players.edit" />
+            <label for="perm-players-edit">Edit Players</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-players-delete" v-model="userForm.permissions.players.delete" />
+            <label for="perm-players-delete">Delete Players</label>
+          </div>
+        </div>
+        
+        <div class="permission-group">
+          <div class="permission-header">Schedules</div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-schedules-view" v-model="userForm.permissions.schedules.view" />
+            <label for="perm-schedules-view">View Schedules</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-schedules-create" v-model="userForm.permissions.schedules.create" />
+            <label for="perm-schedules-create">Create Schedules</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-schedules-edit" v-model="userForm.permissions.schedules.edit" />
+            <label for="perm-schedules-edit">Edit Schedules</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-schedules-delete" v-model="userForm.permissions.schedules.delete" />
+            <label for="perm-schedules-delete">Delete Schedules</label>
+          </div>
+        </div>
+        
+        <div class="permission-group">
+          <div class="permission-header">System</div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-system-view" v-model="userForm.permissions.system.view" />
+            <label for="perm-system-view">View Settings</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-system-edit" v-model="userForm.permissions.system.edit" />
+            <label for="perm-system-edit">Edit Settings</label>
+          </div>
+          <div class="permission-item">
+            <input type="checkbox" id="perm-system-users" v-model="userForm.permissions.system.users" />
+            <label for="perm-system-users">Manage Users</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <template #footer>
+      <button class="btn btn-secondary" @click="showUserModal = false">Cancel</button>
+      <button class="btn btn-primary" @click="saveUser">Save User</button>
+    </template>
+  </Modal>
+  
+  <!-- Delete Confirmation Modal -->
+  <Modal v-model="showDeleteModal" title="Confirm Delete">
+    <p>Are you sure you want to delete the user <strong>{{ userToDelete?.username }}</strong>?</p>
+    <p>This action cannot be undone.</p>
+    
+    <template #footer>
+      <button class="btn btn-secondary" @click="showDeleteModal = false">Cancel</button>
+      <button class="btn btn-danger" @click="deleteUser">Delete User</button>
+    </template>
+  </Modal>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import Header from '../components/Header.vue'
+import Modal from '../components/Modal.vue'
 
 // Active section
-const activeSection = ref('storage')
+const activeSection = ref('users')
 
 // Storage data
 const totalStorage = ref(1024 * 1024 * 1024 * 100) // 100 GB
@@ -229,6 +441,123 @@ const thresholds = ref({
   t90: true,
   t95: true
 })
+
+// User management
+interface Permission {
+  view: boolean;
+  create?: boolean;
+  edit?: boolean;
+  delete?: boolean;
+  users?: boolean;
+}
+
+interface UserPermissions {
+  content: Permission;
+  playlists: Permission;
+  players: Permission;
+  schedules: Permission;
+  system: Permission;
+}
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  active: boolean;
+  lastLogin?: string;
+  permissions: UserPermissions;
+}
+
+// Sample users
+const users = ref<User[]>([
+  {
+    id: 1,
+    username: 'admin',
+    email: 'admin@example.com',
+    role: 'Administrator',
+    active: true,
+    lastLogin: '2023-06-15T09:30:00',
+    permissions: {
+      content: { view: true, create: true, edit: true, delete: true },
+      playlists: { view: true, create: true, edit: true, delete: true },
+      players: { view: true, create: true, edit: true, delete: true },
+      schedules: { view: true, create: true, edit: true, delete: true },
+      system: { view: true, edit: true, users: true }
+    }
+  },
+  {
+    id: 2,
+    username: 'contentmanager',
+    email: 'content@example.com',
+    role: 'Content Manager',
+    active: true,
+    lastLogin: '2023-06-14T16:45:00',
+    permissions: {
+      content: { view: true, create: true, edit: true, delete: true },
+      playlists: { view: true, create: true, edit: true, delete: true },
+      players: { view: true, create: false, edit: false, delete: false },
+      schedules: { view: true, create: false, edit: false, delete: false },
+      system: { view: false, edit: false, users: false }
+    }
+  },
+  {
+    id: 3,
+    username: 'scheduler',
+    email: 'scheduler@example.com',
+    role: 'Scheduler',
+    active: true,
+    lastLogin: '2023-06-15T08:20:00',
+    permissions: {
+      content: { view: true, create: false, edit: false, delete: false },
+      playlists: { view: true, create: false, edit: false, delete: false },
+      players: { view: true, create: false, edit: false, delete: false },
+      schedules: { view: true, create: true, edit: true, delete: true },
+      system: { view: false, edit: false, users: false }
+    }
+  },
+  {
+    id: 4,
+    username: 'viewer',
+    email: 'viewer@example.com',
+    role: 'Viewer',
+    active: false,
+    lastLogin: '2023-06-10T14:30:00',
+    permissions: {
+      content: { view: true, create: false, edit: false, delete: false },
+      playlists: { view: true, create: false, edit: false, delete: false },
+      players: { view: true, create: false, edit: false, delete: false },
+      schedules: { view: true, create: false, edit: false, delete: false },
+      system: { view: false, edit: false, users: false }
+    }
+  }
+]);
+
+// User form and modal state
+const showUserModal = ref(false);
+const showDeleteModal = ref(false);
+const editingUser = ref<User | null>(null);
+const userToDelete = ref<User | null>(null);
+
+// Default permissions template
+const getDefaultPermissions = (): UserPermissions => ({
+  content: { view: true, create: false, edit: false, delete: false },
+  playlists: { view: true, create: false, edit: false, delete: false },
+  players: { view: true, create: false, edit: false, delete: false },
+  schedules: { view: true, create: false, edit: false, delete: false },
+  system: { view: false, edit: false, users: false }
+});
+
+// User form
+const userForm = reactive({
+  id: 0,
+  username: '',
+  email: '',
+  password: '',
+  role: 'Viewer',
+  active: true,
+  permissions: getDefaultPermissions()
+});
 
 // Computed properties
 const storageWarning = computed(() => {
@@ -274,6 +603,170 @@ function updateQuota() {
 function saveStorageSettings() {
   // In a real application, this would save to a backend
   alert('Storage settings saved successfully!')
+}
+
+// User management methods
+function getUserInitials(username: string): string {
+  return username.substring(0, 2).toUpperCase();
+}
+
+function getUserColor(username: string): string {
+  // Generate a deterministic color based on the username
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const hue = hash % 360;
+  return `hsl(${hue}, 70%, 60%)`;
+}
+
+function getRoleClass(role: string): string {
+  switch (role) {
+    case 'Administrator':
+      return 'role-admin';
+    case 'Content Manager':
+      return 'role-content';
+    case 'Scheduler':
+      return 'role-scheduler';
+    default:
+      return 'role-viewer';
+  }
+}
+
+function openUserModal(user?: User) {
+  if (user) {
+    // Edit existing user
+    editingUser.value = user;
+    userForm.id = user.id;
+    userForm.username = user.username;
+    userForm.email = user.email;
+    userForm.password = ''; // Clear password field
+    userForm.role = user.role;
+    userForm.active = user.active;
+    userForm.permissions = JSON.parse(JSON.stringify(user.permissions)); // Deep copy
+  } else {
+    // Create new user
+    editingUser.value = null;
+    userForm.id = 0;
+    userForm.username = '';
+    userForm.email = '';
+    userForm.password = '';
+    userForm.role = 'Viewer';
+    userForm.active = true;
+    userForm.permissions = getDefaultPermissions();
+  }
+  
+  // Set permissions based on role
+  updatePermissionsByRole();
+  
+  showUserModal.value = true;
+}
+
+function updatePermissionsByRole() {
+  // This is a helper function to set default permissions based on role
+  // In a real app, you might want to customize this further
+  
+  const allTrue = { view: true, create: true, edit: true, delete: true };
+  const viewOnly = { view: true, create: false, edit: false, delete: false };
+  
+  switch (userForm.role) {
+    case 'Administrator':
+      userForm.permissions = {
+        content: allTrue,
+        playlists: allTrue,
+        players: allTrue,
+        schedules: allTrue,
+        system: { view: true, edit: true, users: true }
+      };
+      break;
+    case 'Content Manager':
+      userForm.permissions = {
+        content: allTrue,
+        playlists: allTrue,
+        players: viewOnly,
+        schedules: viewOnly,
+        system: { view: false, edit: false, users: false }
+      };
+      break;
+    case 'Scheduler':
+      userForm.permissions = {
+        content: viewOnly,
+        playlists: viewOnly,
+        players: viewOnly,
+        schedules: allTrue,
+        system: { view: false, edit: false, users: false }
+      };
+      break;
+    case 'Viewer':
+      userForm.permissions = {
+        content: viewOnly,
+        playlists: viewOnly,
+        players: viewOnly,
+        schedules: viewOnly,
+        system: { view: false, edit: false, users: false }
+      };
+      break;
+  }
+}
+
+function saveUser() {
+  if (!userForm.username || !userForm.email) {
+    alert('Username and email are required!');
+    return;
+  }
+  
+  if (!editingUser.value && !userForm.password) {
+    alert('Password is required for new users!');
+    return;
+  }
+  
+  if (editingUser.value) {
+    // Update existing user
+    const index = users.value.findIndex(u =>u => u.id === userForm.id);
+    if (index !== -1) {
+      // Keep the existing password if not changed
+      const updatedUser = { ...userForm };
+      if (!updatedUser.password) {
+        delete updatedUser.password;
+      }
+      
+      users.value[index] = {
+        ...users.value[index],
+        ...updatedUser
+      };
+    }
+  } else {
+    // Create new user
+    const newId = Math.max(...users.value.map(u => u.id), 0) + 1;
+    users.value.push({
+      ...userForm,
+      id: newId,
+      lastLogin: undefined
+    });
+  }
+  
+  showUserModal.value = false;
+}
+
+function toggleUserStatus(user: User) {
+  const index = users.value.findIndex(u => u.id === user.id);
+  if (index !== -1) {
+    users.value[index].active = !users.value[index].active;
+  }
+}
+
+function confirmDeleteUser(user: User) {
+  userToDelete.value = user;
+  showDeleteModal.value = true;
+}
+
+function deleteUser() {
+  if (userToDelete.value) {
+    users.value = users.value.filter(u => u.id !== userToDelete.value!.id);
+    showDeleteModal.value = false;
+    userToDelete.value = null;
+  }
 }
 </script>
 
@@ -454,5 +947,199 @@ function saveStorageSettings() {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   width: 80px;
+}
+
+/* User Management Styles */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table th {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.users-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 500;
+  margin-right: 12px;
+}
+
+.user-role {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.role-admin {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.role-content {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.role-scheduler {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.role-viewer {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.user-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-active {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.status-inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+/* User Form Styles */
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-switch input {
+  height: 0;
+  width: 0;
+  visibility: hidden;
+  position: absolute;
+}
+
+.toggle-switch label {
+  cursor: pointer;
+  width: 48px;
+  height: 24px;
+  background: #e2e8f0;
+  display: block;
+  border-radius: 24px;
+  position: relative;
+  margin-right: 8px;
+}
+
+.toggle-switch label:after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 20px;
+  transition: 0.3s;
+}
+
+.toggle-switch input:checked + label {
+  background: #0284c7;
+}
+
+.toggle-switch input:checked + label:after {
+  left: calc(100% - 2px);
+  transform: translateX(-100%);
+}
+
+/* Permissions Grid */
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.permission-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.permission-header {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.permission-item {
+  display: flex;
+  align-items: center;
+}
+
+.permission-item input {
+  margin-right: 8px;
+}
+
+.btn-danger {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
 }
 </style>

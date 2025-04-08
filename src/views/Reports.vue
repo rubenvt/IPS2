@@ -8,14 +8,12 @@
         </div>
         <ul class="sidebar-menu">
           <li 
-            v-for="report in reportTypes" 
-            :key="report.id" 
             class="sidebar-item" 
-            :class="{ active: selectedReportId === report.id }"
-            @click="selectedReportId = report.id"
+            :class="{ active: selectedReportId === 'player-status' }"
+            @click="selectedReportId = 'player-status'"
           >
-            <i :class="report.icon"></i>
-            <span>{{ report.title }}</span>
+            <i class="fas fa-desktop"></i>
+            <span>Player Status</span>
           </li>
         </ul>
       </div>
@@ -88,43 +86,6 @@
               </div>
             </div>
           </div>
-          <div v-else-if="selectedReportId === 'content-usage'" class="report-chart">
-            <h3>Content Usage Statistics</h3>
-            <div class="chart-container">
-              <div class="chart-placeholder">
-                <div class="chart-bar" style="height: 45%;">
-                  <div class="chart-label">Announcements</div>
-                </div>
-                <div class="chart-bar" style="height: 30%;">
-                  <div class="chart-label">Products</div>
-                </div>
-                <div class="chart-bar" style="height: 15%;">
-                  <div class="chart-label">Menu</div>
-                </div>
-                <div class="chart-bar" style="height: 10%;">
-                  <div class="chart-label">Welcome</div>
-                </div>
-              </div>
-            </div>
-            <div class="chart-legend">
-              <div class="legend-item">
-                <div class="legend-color" style="background-color: #3498db;"></div>
-                <div class="legend-label">Company Announcements: 45%</div>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color" style="background-color: #9b59b6;"></div>
-                <div class="legend-label">Product Showcase: 30%</div>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color" style="background-color: #2ecc71;"></div>
-                <div class="legend-label">Cafeteria Menu: 15%</div>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color" style="background-color: #f39c12;"></div>
-                <div class="legend-label">Welcome Presentation: 10%</div>
-              </div>
-            </div>
-          </div>
           <div v-else class="report-empty">
             <i class="fas fa-chart-bar fa-3x"></i>
             <p>Select a report type from the menu</p>
@@ -139,19 +100,10 @@
 import { ref, computed } from 'vue'
 import Header from '../components/Header.vue'
 
-const reportTypes = ref([
-  { id: 'player-status', title: 'Player Status', icon: 'fas fa-desktop' },
-  { id: 'content-usage', title: 'Content Usage', icon: 'fas fa-chart-pie' },
-  { id: 'playback-history', title: 'Playback History', icon: 'fas fa-history' },
-  { id: 'system-performance', title: 'System Performance', icon: 'fas fa-tachometer-alt' },
-  { id: 'user-activity', title: 'User Activity', icon: 'fas fa-users' }
-])
-
 const selectedReportId = ref('player-status')
 
 const currentReportTitle = computed(() => {
-  const report = reportTypes.value.find(r => r.id === selectedReportId.value)
-  return report ? report.title : ''
+  return 'Player Status'
 })
 </script>
 
